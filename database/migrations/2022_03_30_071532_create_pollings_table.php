@@ -20,6 +20,8 @@ return new class extends Migration
             $table->date('deadline')->nullable();
             $table->boolean('with_password');
             $table->string('password')->nullable();
+            $table->boolean('with_restriction_area');
+            $table->integer('restriction_area')->nullable();
             $table->boolean('req_email')->nullable();
             $table->boolean('req_name')->nullable();
             $table->timestamps();
