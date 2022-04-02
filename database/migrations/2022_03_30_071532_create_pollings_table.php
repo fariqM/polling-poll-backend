@@ -15,13 +15,16 @@ return new class extends Migration
     {
         Schema::create('pollings', function (Blueprint $table) {
             $table->id();
+            $table->string('dir');
             $table->text('question');
             $table->text('description');
+            $table->string('q_img')->nullable();
             $table->date('deadline')->nullable();
             $table->boolean('with_password');
             $table->string('password')->nullable();
-            $table->boolean('with_restriction_area');
-            $table->integer('restriction_area')->nullable();
+            $table->boolean('with_area_res');
+            $table->integer('area')->nullable();
+            $table->boolean('with_device_res');
             $table->boolean('req_email')->nullable();
             $table->boolean('req_name')->nullable();
             $table->timestamps();
