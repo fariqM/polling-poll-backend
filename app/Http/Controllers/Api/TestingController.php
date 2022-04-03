@@ -12,20 +12,20 @@ class TestingController extends Controller
     {
         // $sad = $request->file('question_img')->getRealPath();
 
-        // $bytes = substr(md5(time()), random_int(0,9), random_int(5,5));
+        $bytes = substr(md5(time()), random_int(0,9), random_int(5,5));
         // $bytes =md5(mt_rand());
 
-        $answers = json_decode($request->answers);
-        $tes = '';
-        foreach ($answers as $key => $value) {
-            $tes = $value->text;
-        }
+        // $answers = json_decode($request->answers);
+        // $tes = '';
+        // foreach ($answers as $key => $value) {
+        //     $tes = $value->text;
+        // }
 
         return response([
             // 'image1' => $request->file('question_img')->getClientOriginalName(),
-            // 'image2' => $request->file('img2')->getClientOriginalName()
+            'image2' => $bytes
             // 'req' => $tes,
-            'req' => $request->all()
+            // 'req' => $request->all()
         ]);
         // return response(['data' => $request->all()]);
     }

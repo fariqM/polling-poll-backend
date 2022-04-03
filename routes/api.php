@@ -20,4 +20,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::namespace('App\Http\Controllers\Api')->group(function(){
     Route::post('testing', 'TestingController@store');
+    Route::prefix('/poll')->group(function() {
+        Route::post('create', 'PollingController@store');
+    });
 });

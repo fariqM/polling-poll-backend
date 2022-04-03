@@ -16,8 +16,8 @@ return new class extends Migration
         Schema::create('answers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('polling_id')->references('id')->on('pollings')->onDelete('restrict');
-            $table->text('answer');
-            $table->string('img_path');
+            $table->text('text');
+            $table->string('a_img')->nullable();
             $table->timestamps();
         });
     }
