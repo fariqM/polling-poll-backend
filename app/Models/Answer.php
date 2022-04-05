@@ -14,4 +14,12 @@ class Answer extends Model
         'text',
         'a_img',
     ];
+
+    public function polling(){
+        return $this->belongsTo(Polling::class);
+    }
+
+    public function voters(){
+        return $this->hasMany(Voter::class);
+    }
 }

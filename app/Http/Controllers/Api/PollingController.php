@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PollingRequest;
 use App\Models\Answer;
 use App\Models\Polling;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class PollingController extends Controller
@@ -47,20 +49,30 @@ class PollingController extends Controller
 
     public function store(PollingRequest $request)
     {
-
         // $testArr = [];
         // foreach ($request->file('a_img') as $key => $file) {
-        //     $a_file_name = 'tes' . '.' . $file->getClientOriginalExtension();
-        //     $file->storeAs('public/img/answers', $a_file_name);
-        //     array_push($testArr, $file->getClientOriginalExtension());
+        //     $originalName = $file->getClientOriginalName();
+        //     $format = substr($originalName, strpos($originalName, ".") + 1);
+        //     $name = substr($originalName, 0, strpos($originalName, "."));
+        //     array_push($testArr, [
+        //         'idx' => intval($name),
+        //         'format' => $format 
+        //     ]);
         // }
-        // return response($testArr);
+        // // for ($i=0; $i < 3; $i++) { 
+        // //     array_push($testArr, $request->a_img[$i]);
+        // // }
+        // return response([
+        //     // 'arr' => $testArr, 
+        //     'req' => $request->all()
+        // ]);
+
 
 
         $url = $this->substr5($this->CSPRNG(10), true);
         $file_name = null;
         $answers = json_decode($request->answers);
-        $a_file_name_collection = [];
+        $a_file_collection = [];
         $final_url = '';
 
         try {
@@ -72,34 +84,49 @@ class PollingController extends Controller
             }
 
             // create new poll data
-            $create_poll = Polling::create(array_merge($request->all(), ['dir' => $url, 'q_img' =>  $file_name]));
+            if ($request->with_password == 1) {
+                $password = Hash::make($request->password);
+            } else {
+                $password = $request->password;
+            }
+            $create_poll = Polling::create(array_merge($request->all(), [
+                'dir' => $url,
+                'q_img' =>  $file_name,
+                'password' => $password
+            ]));
+
+            // store answer img
+            foreach ($request->file('a_img') as $key => $file) {
+                $originalName = $file->getClientOriginalName();
+                $format = $file->getClientOriginalExtension();
+                $idx = substr($originalName, 0, strpos($originalName, "."));
+
+                $storeName = $this->substr5(time(), true) . '.' . $format;
+
+                array_push($a_file_collection, [
+                    'indx' => intval($idx),
+                    'format' => $format,
+                    'storeName' =>  $storeName
+                ]);
+
+                $file->storeAs('public/img/answers', $storeName);
+            }
+
+            // modified the answers array to include the filename
+            foreach ($a_file_collection as $key => $value) {
+                $answers[$value['indx']]->img_file = $value['storeName'];
+            }
+            // return response($answers);
 
             // create answers data
-            foreach ($answers as $key => $value) {
-                // $newRand = $this->substr5(time(), true);
-
-                if ($answers[$key]->img_file) {
-                    $a_img = $this->substr5(time(), true);
-                    array_push($a_file_name_collection, $a_img);
-                } else {
-                    $a_img = null;
-                }
+            foreach ($answers as $key => $answer) {
+                // return response(['data' => $answer->img_file]);
 
                 Answer::create([
                     'polling_id' => $create_poll->id,
-                    'text' => $value->text,
-                    'a_img' => $a_img
+                    'text' => $answer->text,
+                    'a_img' => $answer->img_file
                 ]);
-            }
-
-            foreach ($request->file('a_img') as $key => $file) {
-                // if ($answers[$key]->img_file) {
-                //     $a_file_name = $a_file_name_collection[$key] . '.' . $file->getClientOriginalExtension();
-                //     $file->storeAs('public/img/answers', $a_file_name);
-                //     return response($file);
-                // }
-                $a_file_name = $a_file_name_collection[$key] . '.' . $file->getClientOriginalExtension();
-                $file->storeAs('public/img/answers', $a_file_name);
             }
 
             $final_url = $create_poll->dir;
@@ -108,5 +135,30 @@ class PollingController extends Controller
         }
 
         return response(['success' => true, 'url' => $final_url]);
+    }
+
+    public function show($url)
+    {
+        $polling = Polling::where('dir', $url)->firstOrFail();
+        return response($polling);
+    }
+
+    public function index($deviceID)
+    {
+        if (Auth::check()) {
+            try {
+                $data = Polling::where('owner_id', Auth::id())->get();
+            } catch (\Throwable $th) {
+                return response(['success' => false, 'message' => $th->getMessage()], 500);
+            }
+            return response(['data' => $data]);
+        } else {
+            try {
+                $data = Polling::where('owner_id', $deviceID)->with('voters')->get();
+            } catch (\Throwable $th) {
+                return response(['success' => false, 'message' => $th->getMessage()], 500);
+            }
+            return response(['data' =>  $data]);
+        }
     }
 }

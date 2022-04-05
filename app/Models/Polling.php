@@ -10,6 +10,7 @@ class Polling extends Model
     use HasFactory;
 
     protected $fillable = [
+        'owner_id',
         'dir', 
         'question', 
         'description', 
@@ -23,4 +24,12 @@ class Polling extends Model
         'req_email',
         'req_name',
     ];
+
+    public function answers(){
+        return $this->hasMany(Answer::class);
+    }
+
+    public function voters(){
+        return $this->hasManyThrough(Voter::class, Answer::class);
+    }
 }

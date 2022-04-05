@@ -15,6 +15,7 @@ return new class extends Migration
     {
         Schema::create('pollings', function (Blueprint $table) {
             $table->id();
+            $table->string('owner_id');
             $table->string('dir');
             $table->text('question');
             $table->text('description');

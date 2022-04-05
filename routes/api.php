@@ -20,7 +20,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::namespace('App\Http\Controllers\Api')->group(function(){
     Route::post('testing', 'TestingController@store');
-    Route::prefix('/poll')->group(function() {
+    Route::prefix('/p')->group(function() {
         Route::post('create', 'PollingController@store');
+        Route::get('{dir}', 'PollingController@show');
     });
+    Route::get('my-poll/{deviceID}', 'PollingController@index');
 });
