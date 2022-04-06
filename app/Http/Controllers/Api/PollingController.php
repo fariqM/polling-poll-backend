@@ -96,20 +96,26 @@ class PollingController extends Controller
             ]));
 
             // store answer img
-            foreach ($request->file('a_img') as $key => $file) {
-                $originalName = $file->getClientOriginalName();
-                $format = $file->getClientOriginalExtension();
-                $idx = substr($originalName, 0, strpos($originalName, "."));
-
-                $storeName = $this->substr5(time(), true) . '.' . $format;
-
-                array_push($a_file_collection, [
-                    'indx' => intval($idx),
-                    'format' => $format,
-                    'storeName' =>  $storeName
-                ]);
-
-                $file->storeAs('public/img/answers', $storeName);
+            if ($request->file('a_img') !== null) {
+                foreach ($request->file('a_img') as $key => $file) {
+                    $originalName = $file->getClientOriginalName();
+                    return response([
+                        // 'arr' => $testArr, 
+                        'req' => $originalName
+                    ]);
+                    $format = $file->getClientOriginalExtension();
+                    $idx = substr($originalName, 0, strpos($originalName, "."));
+    
+                    $storeName = $this->substr5(time(), true) . '.' . $format;
+    
+                    array_push($a_file_collection, [
+                        'indx' => intval($idx),
+                        'format' => $format,
+                        'storeName' =>  $storeName
+                    ]);
+    
+                    $file->storeAs('public/img/answers', $storeName);
+                }
             }
 
             // modified the answers array to include the filename
@@ -147,14 +153,14 @@ class PollingController extends Controller
     {
         if (Auth::check()) {
             try {
-                $data = Polling::where('owner_id', Auth::id())->get();
+                $data = Polling::where('owner_id', Auth::id())->with('answers.voters')->get();
             } catch (\Throwable $th) {
                 return response(['success' => false, 'message' => $th->getMessage()], 500);
             }
             return response(['data' => $data]);
         } else {
             try {
-                $data = Polling::where('owner_id', $deviceID)->with('voters')->get();
+                $data = Polling::where('owner_id', $deviceID)->with('answers.voters')->get();
             } catch (\Throwable $th) {
                 return response(['success' => false, 'message' => $th->getMessage()], 500);
             }
