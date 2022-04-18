@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PollingRequest;
 use App\Models\Answer;
 use App\Models\Polling;
+use App\Models\Voter;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -94,26 +95,23 @@ class PollingController extends Controller
                 'q_img' =>  $file_name,
                 'password' => $password
             ]));
-
+            // return response(['data' => $request->all()]);
             // store answer img
             if ($request->file('a_img') !== null) {
+
                 foreach ($request->file('a_img') as $key => $file) {
                     $originalName = $file->getClientOriginalName();
-                    return response([
-                        // 'arr' => $testArr, 
-                        'req' => $originalName
-                    ]);
                     $format = $file->getClientOriginalExtension();
                     $idx = substr($originalName, 0, strpos($originalName, "."));
-    
+
                     $storeName = $this->substr5(time(), true) . '.' . $format;
-    
+
                     array_push($a_file_collection, [
                         'indx' => intval($idx),
                         'format' => $format,
                         'storeName' =>  $storeName
                     ]);
-    
+
                     $file->storeAs('public/img/answers', $storeName);
                 }
             }
@@ -122,11 +120,10 @@ class PollingController extends Controller
             foreach ($a_file_collection as $key => $value) {
                 $answers[$value['indx']]->img_file = $value['storeName'];
             }
-            // return response($answers);
 
             // create answers data
             foreach ($answers as $key => $answer) {
-                // return response(['data' => $answer->img_file]);
+
 
                 Answer::create([
                     'polling_id' => $create_poll->id,
@@ -143,10 +140,27 @@ class PollingController extends Controller
         return response(['success' => true, 'url' => $final_url]);
     }
 
+    public function submitPoll(Answer $answer, Request $request)
+    {
+        // return response(['data' => $request->all()]);
+        try {
+            $voter = Voter::create([
+                'answer_id' => $answer->id,
+                'name' => $request->name,
+                'email' => $request->email,
+                'device_id' => $request->device_id,
+                'is_verified' => 1
+            ]);
+        } catch (\Throwable $th) {
+            return response(['success' => false, 'message' => $th->getMessage()], 500);
+        }
+        return response(['success' => true]);
+    }
+
     public function show($url)
     {
-        $polling = Polling::where('dir', $url)->firstOrFail();
-        return response($polling);
+        $polling = Polling::where('dir', $url)->with('answers')->firstOrFail();
+        return response(['data' => $polling]);
     }
 
     public function index($deviceID)

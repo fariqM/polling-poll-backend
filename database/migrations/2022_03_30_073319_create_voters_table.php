@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('answer_id')->references('id')->on('answers')->onDelete('restrict');
             $table->string('name')->nullable();
             $table->string('email')->nullable();
-            $table->text('device_id');
+            $table->text('device_id')->nullable();
             $table->boolean('is_verified')->nullable();
             $table->timestamps();
         });

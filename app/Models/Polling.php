@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Polling extends Model
 {
     use HasFactory;
+    protected $hidden = [
+        'password',
+    ];
 
     protected $fillable = [
         'owner_id',

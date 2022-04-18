@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class TestingController extends Controller
 {
-    public function store(PollingRequest $request)
+    public function store()
     {
         // $sad = $request->file('question_img')->getRealPath();
 

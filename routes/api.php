@@ -18,11 +18,16 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::namespace('App\Http\Controllers\Api')->group(function(){
-    Route::post('testing', 'TestingController@store');
-    Route::prefix('/p')->group(function() {
+Route::namespace('App\Http\Controllers\Api')->group(function () {
+    Route::get('testing', 'TestingController@store');
+    Route::prefix('/p')->group(function () {
         Route::post('create', 'PollingController@store');
         Route::get('{dir}', 'PollingController@show');
+        Route::get('{dir}/{deviceId}', 'VotersController@checkDevice');
+        Route::post('verify-password/{dir}', 'VotersController@checkPassword');
+    });
+    Route::prefix('/polling')->group(function () {
+        Route::post('submit/{answer:id}', 'PollingController@submitPoll');
     });
     Route::get('my-poll/{deviceID}', 'PollingController@index');
 });
