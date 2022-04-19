@@ -50,26 +50,6 @@ class PollingController extends Controller
 
     public function store(PollingRequest $request)
     {
-        // $testArr = [];
-        // foreach ($request->file('a_img') as $key => $file) {
-        //     $originalName = $file->getClientOriginalName();
-        //     $format = substr($originalName, strpos($originalName, ".") + 1);
-        //     $name = substr($originalName, 0, strpos($originalName, "."));
-        //     array_push($testArr, [
-        //         'idx' => intval($name),
-        //         'format' => $format 
-        //     ]);
-        // }
-        // // for ($i=0; $i < 3; $i++) { 
-        // //     array_push($testArr, $request->a_img[$i]);
-        // // }
-        // return response([
-        //     // 'arr' => $testArr, 
-        //     'req' => $request->all()
-        // ]);
-
-
-
         $url = $this->substr5($this->CSPRNG(10), true);
         $file_name = null;
         $answers = json_decode($request->answers);
@@ -104,7 +84,7 @@ class PollingController extends Controller
                     $format = $file->getClientOriginalExtension();
                     $idx = substr($originalName, 0, strpos($originalName, "."));
 
-                    $storeName = $this->substr5(time(), true) . '.' . $format;
+                    $storeName = $this->substr5(random_int(100000, 999999), true) . '.' . $format;
 
                     array_push($a_file_collection, [
                         'indx' => intval($idx),
@@ -138,6 +118,36 @@ class PollingController extends Controller
         }
 
         return response(['success' => true, 'url' => $final_url]);
+    }
+
+    public function update(Polling $polling, PollingRequest $request)
+    {
+
+        $url = $this->substr5($this->CSPRNG(10), true);
+        $file_name = null;
+        $answers = json_decode($request->answers);
+        $a_file_collection = [];
+        $final_url = '';
+
+        try {
+            if ($request->file('q_img')) {
+                $q_img = $request->file('q_img');
+                // $file_name =  $url . '.' . $q_img->getClientOriginalExtension();
+                $q_img->storeAs('public/img', $polling->q_img);
+                return response(['q_img' => 'ada', 'req' => $request->all()]);
+            } else {
+                if ($request->q_img == 'null') {
+                    return response("foto hilang");
+                }
+                return response(['q_img' => 'gada', 'req' => $request->all()]);
+            }
+        } catch (\Throwable $th) {
+            return response(['success' => false, 'message' => $th->getMessage()], 500);
+        }
+
+
+
+        return response(['data' => $request->all(), 'mdl' => $polling, 'ans' => $answers]);
     }
 
     public function submitPoll(Answer $answer, Request $request)

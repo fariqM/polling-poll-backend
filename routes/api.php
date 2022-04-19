@@ -23,6 +23,7 @@ Route::namespace('App\Http\Controllers\Api')->group(function () {
     Route::prefix('/p')->group(function () {
         Route::post('create', 'PollingController@store');
         Route::get('{dir}', 'PollingController@show');
+        Route::put('{polling:dir}/update', 'PollingController@update');
         Route::get('{dir}/{deviceId}', 'VotersController@checkDevice');
         Route::post('verify-password/{dir}', 'VotersController@checkPassword');
     });
