@@ -97,14 +97,14 @@ class PollingController extends Controller
             }
 
             // modified the answers array to include the filename
+            // add property img_file to answers array that contain file name
+            // ['img_file' => 'asdasd.jpg']
             foreach ($a_file_collection as $key => $value) {
                 $answers[$value['indx']]->img_file = $value['storeName'];
             }
 
             // create answers data
             foreach ($answers as $key => $answer) {
-
-
                 Answer::create([
                     'polling_id' => $create_poll->id,
                     'text' => $answer->text,
@@ -128,26 +128,96 @@ class PollingController extends Controller
         $answers = json_decode($request->answers);
         $a_file_collection = [];
         $final_url = '';
+        $newPolling = [];
 
         try {
+            // img question handler
             if ($request->file('q_img')) {
                 $q_img = $request->file('q_img');
-                // $file_name =  $url . '.' . $q_img->getClientOriginalExtension();
                 $q_img->storeAs('public/img', $polling->q_img);
-                return response(['q_img' => 'ada', 'req' => $request->all()]);
+                $newPolling = array_merge($newPolling, ['q_img' => $polling->q_img]);
+                // return response(['q_img' => 'ada', 'req' => $request->all()]);
             } else {
                 if ($request->q_img == 'null') {
-                    return response("foto hilang");
+                    $newPolling = array_merge($newPolling, ['q_img' => null]);
+                    // return response("foto hilang");
+                } else {
+                    $newPolling = array_merge($newPolling, ['q_img' => $polling->q_img]);
                 }
-                return response(['q_img' => 'gada', 'req' => $request->all()]);
+                // return response(['q_img' => 'gada', 'req' => $request->all()]);
             }
+
+            if ($request->with_password == 1) {
+                $password = Hash::make($request->password);
+                $newPolling = array_merge($newPolling, ['password' => $password]);
+            } else {
+                $newPolling = array_merge($newPolling, ['with_password' => $polling->with_password]);
+            }
+
+            $polling->update(array_merge($request->all(), $newPolling));
+
+            // answers img handler
+            if ($request->file('a_img') !== null) {
+
+                foreach ($request->file('a_img') as $key => $file) {
+                    $originalName = $file->getClientOriginalName();
+                    $format = $file->getClientOriginalExtension();
+                    $idx = substr($originalName, 0, strpos($originalName, "."));
+
+                    // divide into 2 conditions
+                    // first handle new img (replacement image) from existing answer
+                    // second one is from new answer.
+                    // ## weird algorithm, i know. :) but it work. (y)
+                    if (property_exists($answers[$idx], 'a_img')) {
+                        $file->storeAs('public/img/answers', $answers[$idx]->a_img);
+                    } else {
+                        $storeName = $this->substr5(random_int(100000, 999999), true) . '.' . $format;
+                        $file->storeAs('public/img/answers', $storeName);
+
+                        // Make new statement array just to tell the next step about the file 
+                        // that has been stored
+                        array_push($a_file_collection, [
+                            'indx' => intval($idx),
+                            'format' => $format,
+                            'storeName' =>  $storeName
+                        ]);
+                    }
+                }
+            }
+
+            // modified the answers array to include the filename
+            // add property a_img to answers array that contain file name
+            // E.g ['a_img' => 'asdasd.jpg']
+            // ## another weird algorithm.
+            foreach ($a_file_collection as $key => $value) {
+                $answers[$value['indx']]->a_img = $value['storeName'];
+            }
+
+            // handle if there existing id on DB, then just update the record
+            // if not, so create one.
+            // but we cant handle if the user delete the old answer and make new one :)))))
+            // i have an idea. let throw this problem to another api :)
+            foreach ($answers as $key => $value) {
+                Answer::updateOrCreate(['id' => $value->id], [
+                    'polling_id' => $polling->id,
+                    'text' => $value->text,
+                    'a_img' =>  $request->old_a_img[$key] == 'null' ? null : $value->a_img
+                ]);
+            }
+
+            return response(['data' => $answers, 'req' => $request->all(), 'oth' => $a_file_collection]);
+
+
+
+
+            return response(['success' => true, 'mdl' => $polling, 'ans' => $answers, 'req' => $request->all()]);
         } catch (\Throwable $th) {
             return response(['success' => false, 'message' => $th->getMessage()], 500);
         }
 
 
 
-        return response(['data' => $request->all(), 'mdl' => $polling, 'ans' => $answers]);
+        // return response(['data' => $request->all(), 'mdl' => $polling, 'ans' => $answers]);
     }
 
     public function submitPoll(Answer $answer, Request $request)
