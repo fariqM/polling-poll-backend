@@ -34,23 +34,83 @@ class PollingController extends Controller
         return md5($value);
     }
 
-    function substr5($value, $isUsedMD5 = false)
+    function substr5($value, $isUsedMD5 = false, $lenght = 5)
     {
         if ($isUsedMD5) {
-            return substr($this->conv_md5($value), random_int(0, 25), 5);
+            return substr($this->conv_md5($value), random_int(0, 25), $lenght);
         } else {
-            $length = strlen($value);
-            if ($length < 5) {
-                return substr($this->conv_md5($value), random_int(0, 25), 5);
+            $val_length = strlen($value);
+            if ($val_length <= $lenght) {
+                return substr($this->conv_md5($value), random_int(0, 25), $lenght);
             } else {
-                return substr($value, random_int(1, $length - 5), 5);
+                return substr($value, random_int(1, $val_length - $lenght), $lenght);
             }
         }
     }
 
+    public function substr5_test(Request $request)
+    {
+
+        $isUsedMD5 = intval($request->isMd5) == 0 ? false : true;
+        $value = $request->val;
+        $lenght = intval($request->length);
+        $all_req = [
+            'md5' => $isUsedMD5,
+            'val' => $value,
+            'length' => $lenght
+        ];
+
+        // return response(Polling::where('dir', 'e82asd53')->count());
+
+        try {
+            if ($isUsedMD5) {
+                return response([
+                    'result' => substr($this->conv_md5($value), random_int(0, 25), $lenght),
+                    'data' => $all_req,
+                    'res' => 'kondisi 1'
+                ]);
+            } else {
+                $val_length = strlen($value);
+                if ($val_length <= $lenght) {
+                    return response([
+                        'result' => substr($this->conv_md5($value), random_int(0, 25), $lenght),
+                        'data' => $all_req,
+                        'res' => 'kondisi 2'
+                    ]);
+                } else {
+                    return response([
+                        'result' => substr($value, random_int(1, $val_length - $lenght), $lenght),
+                        'data' => $all_req,
+                        'res' => 'kondisi 3',
+                        'var_leng' => $val_length
+                    ]);
+                }
+            }
+        } catch (\Throwable $th) {
+            return response(['success' => false, 'message' => $th->getMessage()], 500);
+        }
+    }
+
+    public function getPollUrl()
+    {
+        $condition = true;
+        $result  = null;
+
+        while ($condition) {
+            $url = $this->substr5($this->CSPRNG(10), true);
+            $recordExist = Polling::where('dir', $url)->count();
+            if ($recordExist == 0) {
+                $condition = false;
+                $result = $url;
+            }
+        }
+
+        return $result;
+    }
+
     public function store(PollingRequest $request)
     {
-        $url = $this->substr5($this->CSPRNG(10), true);
+        $url = $this->getPollUrl();
         $file_name = null;
         $answers = json_decode($request->answers);
         $a_file_collection = [];
@@ -75,7 +135,7 @@ class PollingController extends Controller
                 'q_img' =>  $file_name,
                 'password' => $password
             ]));
-            // return response(['data' => $request->all()]);
+
             // store answer img
             if ($request->file('a_img') !== null) {
 
@@ -84,7 +144,7 @@ class PollingController extends Controller
                     $format = $file->getClientOriginalExtension();
                     $idx = substr($originalName, 0, strpos($originalName, "."));
 
-                    $storeName = $this->substr5(random_int(100000, 999999), true) . '.' . $format;
+                    $storeName = $this->substr5(random_int(100000000000, 999999999999), true, 10) . '.' . $format;
 
                     array_push($a_file_collection, [
                         'indx' => intval($idx),
@@ -122,21 +182,21 @@ class PollingController extends Controller
 
     public function update(Polling $polling, PollingRequest $request)
     {
-
-        $url = $this->substr5($this->CSPRNG(10), true);
-        $file_name = null;
         $answers = json_decode($request->answers);
         $a_file_collection = [];
-        $final_url = '';
         $newPolling = [];
-
         try {
             // img question handler
             if ($request->file('q_img')) {
                 $q_img = $request->file('q_img');
-                $q_img->storeAs('public/img', $polling->q_img);
-                $newPolling = array_merge($newPolling, ['q_img' => $polling->q_img]);
-                // return response(['q_img' => 'ada', 'req' => $request->all()]);
+                if ($polling->q_img == null) {
+                    $file_name =  $polling->dir . '.' . $q_img->getClientOriginalExtension();
+                    $q_img->storeAs('public/img', $file_name);
+                    $newPolling = array_merge($newPolling, ['q_img' => $file_name]);
+                } else {
+                    $q_img->storeAs('public/img', $polling->q_img);
+                    $newPolling = array_merge($newPolling, ['q_img' => $polling->q_img]);
+                }
             } else {
                 if ($request->q_img == 'null') {
                     $newPolling = array_merge($newPolling, ['q_img' => null]);
@@ -144,7 +204,6 @@ class PollingController extends Controller
                 } else {
                     $newPolling = array_merge($newPolling, ['q_img' => $polling->q_img]);
                 }
-                // return response(['q_img' => 'gada', 'req' => $request->all()]);
             }
 
             if ($request->with_password == 1) {
@@ -168,10 +227,10 @@ class PollingController extends Controller
                     // first handle new img (replacement image) from existing answer
                     // second one is from new answer.
                     // ## weird algorithm, i know. :) but it work. (y)
-                    if (property_exists($answers[$idx], 'a_img')) {
+                    if (property_exists($answers[$idx], 'a_img') && $answers[$idx]->a_img !== null) {
                         $file->storeAs('public/img/answers', $answers[$idx]->a_img);
                     } else {
-                        $storeName = $this->substr5(random_int(100000, 999999), true) . '.' . $format;
+                        $storeName = $this->substr5(random_int(100000000000, 999999999999), true, 10) . '.' . $format;
                         $file->storeAs('public/img/answers', $storeName);
 
                         // Make new statement array just to tell the next step about the file 
@@ -201,23 +260,13 @@ class PollingController extends Controller
                 Answer::updateOrCreate(['id' => $value->id], [
                     'polling_id' => $polling->id,
                     'text' => $value->text,
-                    'a_img' =>  $request->old_a_img[$key] == 'null' ? null : $value->a_img
+                    'a_img' =>  $request->old_a_img[$key] == 'null' || $request->old_a_img[$key] == null ? null : $value->a_img
                 ]);
             }
-
-            return response(['data' => $answers, 'req' => $request->all(), 'oth' => $a_file_collection]);
-
-
-
-
-            return response(['success' => true, 'mdl' => $polling, 'ans' => $answers, 'req' => $request->all()]);
         } catch (\Throwable $th) {
             return response(['success' => false, 'message' => $th->getMessage()], 500);
         }
-
-
-
-        // return response(['data' => $request->all(), 'mdl' => $polling, 'ans' => $answers]);
+        return response(['success' => true]);
     }
 
     public function submitPoll(Answer $answer, Request $request)
@@ -260,5 +309,11 @@ class PollingController extends Controller
             }
             return response(['data' =>  $data]);
         }
+    }
+    public function edit($deviceID, $dir)
+    {
+        $data = Polling::where('owner_id', $deviceID)->where('dir', $dir)->with('answers.voters')->firstOrFail();
+
+        return response(['data' => $data]);
     }
 }

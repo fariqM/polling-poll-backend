@@ -19,7 +19,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::namespace('App\Http\Controllers\Api')->group(function () {
-    Route::get('testing', 'TestingController@store');
+    Route::post('substr5-testing', 'PollingController@substr5_test');
     Route::prefix('/p')->group(function () {
         Route::post('create', 'PollingController@store');
         Route::get('{dir}', 'PollingController@show');
@@ -31,4 +31,6 @@ Route::namespace('App\Http\Controllers\Api')->group(function () {
         Route::post('submit/{answer:id}', 'PollingController@submitPoll');
     });
     Route::get('my-poll/{deviceID}', 'PollingController@index');
+    Route::get('my-poll/{deviceID}/{dir}', 'PollingController@edit');
+
 });
