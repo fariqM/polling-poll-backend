@@ -316,4 +316,14 @@ class PollingController extends Controller
 
         return response(['data' => $data]);
     }
+    public function destroy($dir, $deviceID)
+    {
+        $polling = Polling::where('dir', $dir)->where('owner_id', $deviceID)->with('answers.voters')->firstOrFail();
+        try {
+            $polling->delete();
+        } catch (\Throwable $th) {
+            return response(['success' => false, 'message' => $th->getMessage()], 500);
+        }
+        return response(['success' => true]);
+    }
 }

@@ -22,4 +22,12 @@ class Answer extends Model
     public function voters(){
         return $this->hasMany(Voter::class);
     }
+
+    protected static function boot() {
+        parent::boot();
+
+        self::deleting(function($answer) {
+             $answer->voters()->delete();
+        });
+    }
 }

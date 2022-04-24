@@ -15,14 +15,14 @@ return new class extends Migration
     {
         Schema::create('voters', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('answer_id')->references('id')->on('answers')->onDelete('restrict');
+            $table->foreignId('answer_id')->references('id')->on('answers')->onDelete('cascade');
             $table->string('name')->nullable();
             $table->string('email')->nullable();
             $table->text('device_id')->nullable();
             $table->boolean('is_verified')->nullable();
             $table->timestamps();
         });
-    }
+    }   
 
     /**
      * Reverse the migrations.

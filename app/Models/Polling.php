@@ -14,11 +14,11 @@ class Polling extends Model
 
     protected $fillable = [
         'owner_id',
-        'dir', 
-        'question', 
-        'description', 
-        'q_img', 
-        'deadline', 
+        'dir',
+        'question',
+        'description',
+        'q_img',
+        'deadline',
         'with_password',
         'password',
         'with_area_res',
@@ -28,11 +28,22 @@ class Polling extends Model
         'req_name',
     ];
 
-    public function answers(){
+    public function answers()
+    {
         return $this->hasMany(Answer::class);
     }
 
-    public function voters(){
+    public function voters()
+    {
         return $this->hasManyThrough(Voter::class, Answer::class);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        self::deleting(function ($polling) {
+            $polling->answers()->delete();
+        });
     }
 }
