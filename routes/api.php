@@ -28,6 +28,9 @@ Route::namespace('App\Http\Controllers\Api')->group(function () {
         Route::get('{dir}/{deviceId}', 'VotersController@checkDevice');
         Route::post('verify-password/{dir}', 'VotersController@checkPassword');
     });
+    Route::prefix('/a')->group(function(){
+        Route::delete('{answers_id}/{poll_id}', 'PollingController@deleteAnswer');
+    });
     Route::prefix('/polling')->group(function () {
         Route::post('submit/{answer:id}', 'PollingController@submitPoll');
     });

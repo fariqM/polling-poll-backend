@@ -296,14 +296,14 @@ class PollingController extends Controller
     {
         if (Auth::check()) {
             try {
-                $data = Polling::where('owner_id', Auth::id())->with('answers.voters')->get();
+                $data = Polling::where('owner_id', Auth::id())->with('answers.voters')->orderBy('created_at', 'desc')->get();
             } catch (\Throwable $th) {
                 return response(['success' => false, 'message' => $th->getMessage()], 500);
             }
             return response(['data' => $data]);
         } else {
             try {
-                $data = Polling::where('owner_id', $deviceID)->with('answers.voters')->get();
+                $data = Polling::where('owner_id', $deviceID)->with('answers.voters')->orderBy('created_at', 'desc')->get();
             } catch (\Throwable $th) {
                 return response(['success' => false, 'message' => $th->getMessage()], 500);
             }
@@ -321,6 +321,17 @@ class PollingController extends Controller
         $polling = Polling::where('dir', $dir)->where('owner_id', $deviceID)->with('answers.voters')->firstOrFail();
         try {
             $polling->delete();
+        } catch (\Throwable $th) {
+            return response(['success' => false, 'message' => $th->getMessage()], 500);
+        }
+        return response(['success' => true]);
+    }
+
+    public function deleteAnswer($answers_id, $poll_id)
+    {
+        $answer = Answer::where('id', $answers_id)->where('polling_id', $poll_id)->firstOrFail();
+        try {
+            $answer->delete();
         } catch (\Throwable $th) {
             return response(['success' => false, 'message' => $th->getMessage()], 500);
         }
