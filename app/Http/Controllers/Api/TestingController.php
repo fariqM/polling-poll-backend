@@ -12,7 +12,7 @@ class TestingController extends Controller
     {
         // $sad = $request->file('question_img')->getRealPath();
 
-        $bytes = substr(md5(time()), random_int(0,9), random_int(5,5));
+        $bytes = substr(md5(time()), random_int(0, 9), random_int(5, 5));
         // $bytes =md5(mt_rand());
 
         // $answers = json_decode($request->answers);
@@ -28,5 +28,10 @@ class TestingController extends Controller
             // 'req' => $request->all()
         ]);
         // return response(['data' => $request->all()]);
+    }
+
+    public function testing_app()
+    {
+        return response(['message' => "Try me, i dare you..."], 200);
     }
 }

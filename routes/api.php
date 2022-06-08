@@ -14,11 +14,15 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+
+
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
 Route::namespace('App\Http\Controllers\Api')->group(function () {
+    Route::get('testing-app', 'TestingController@testing_app');
+
     Route::post('substr5-testing', 'PollingController@substr5_test');
     Route::prefix('/p')->group(function () {
         Route::post('create', 'PollingController@store');
