@@ -289,7 +289,8 @@ class PollingController extends Controller
     public function show($url)
     {
         $polling = Polling::where('dir', $url)->with('answers')->firstOrFail();
-        return response(['data' => $polling]);
+        return response()->json(['data' => $polling], 200, [],JSON_NUMERIC_CHECK);
+        // return response(['data' => $polling]);
     }
 
     public function index($deviceID)
@@ -300,21 +301,23 @@ class PollingController extends Controller
             } catch (\Throwable $th) {
                 return response(['success' => false, 'message' => $th->getMessage()], 500);
             }
-            return response(['data' => $data]);
+            return response()->json(['data' => $data], 200, [],JSON_NUMERIC_CHECK);
+            // return response(['data' => $data]);
         } else {
             try {
                 $data = Polling::where('owner_id', $deviceID)->with('answers.voters')->orderBy('created_at', 'desc')->get();
             } catch (\Throwable $th) {
                 return response(['success' => false, 'message' => $th->getMessage()], 500);
             }
-            return response(['data' =>  $data]);
+            return response()->json(['data' => $data], 200, [],JSON_NUMERIC_CHECK);
+            // return response(['data' =>  $data]);
         }
     }
     public function edit($deviceID, $dir)
     {
         $data = Polling::where('owner_id', $deviceID)->where('dir', $dir)->with('answers.voters')->firstOrFail();
-
-        return response(['data' => $data]);
+        return response()->json(['data' => $data], 200, [],JSON_NUMERIC_CHECK);
+        // return response(['data' => $data]);
     }
     public function destroy($dir, $deviceID)
     {

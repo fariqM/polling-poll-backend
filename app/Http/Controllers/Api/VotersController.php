@@ -17,8 +17,8 @@ class VotersController extends Controller
                 $votq->where('device_id', $deviceId);
             }]);
         }])->get();
-
-        return response(['data' => $data]);
+        return response()->json(['data' => $data], 200, [],JSON_NUMERIC_CHECK);
+        // return response(['data' => $data]);
     }
     public function checkPassword($dir, Request $request)
     {
